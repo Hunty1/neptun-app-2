@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kurzusok</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f5f5f5;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    .course-list {
+      list-style: none;
+      padding: 0;
+    }
+    .course-list li {
+      background: #fff;
+      margin: 10px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+    }
+    button {
+      padding: 5px 10px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+<h1>Elérhető kurzusok</h1>
+<h2>Bejelentkezett felhasználó: <span id="logged-in-user"></span></h2>
+
+<ul id="course-list" class="course-list"></ul>
+
+<script>
+  // Bejelentkezett felhasználó adatainak beállítása a session-ből
+  const user = JSON.parse(sessionStorage.getItem('loggedInUser'));
+
+  // Ha nincs bejelentkezve, irányítsuk át a bejelentkezési oldalra
+  if (!user) {
+    window.location.href = '/login.html';
+  }
+
+  // Megjelenítjük a felhasználónevét az oldalon
+  document.getElementById('logged-in-user').textContent = user.username;
+
+  // Kurzusok betöltése az API-ról
+  async function fetchCourses() {
+    try {
+      const response = await fetch('/api/courses');
+      const courses = await response.json();
+
+      const courseList = document.getElementById('course-list');
+      courseList.innerHTML = '';
+
+      // Kurzusok megjelenítése
+      courses.forEach(course => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+                        <span>${course.name} (${course.code}) - ${course.credit} kredit</span>
+                        <button onclick="enrollInCourse(${course.id})">Felvétel</button>
+                    `;
+        courseList.appendChild(li);
+      });
+    } catch (error) {
+      console.error('Hiba a kurzusok betöltésekor:', error);
+    }
+  }
+
+  // Kurzus felvétele
+  async function enrollInCourse(courseId) {
+    try {
+      const response = await fetch(`/api/courses/enroll/${courseId}?username=${user.username}`, {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        alert("Sikeresen felvetted a tárgyat!");
+      } else {
+        const errorText = await response.text();
+        alert(`Hiba történt: ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Hiba a tárgyfelvétel során:', error);
+    }
+  }
+
+  // Az oldal betöltésekor automatikusan lekérjük a kurzusokat
+  fetchCourses();
+</script>
+</body>
+</html>

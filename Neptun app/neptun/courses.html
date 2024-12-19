@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kurzusok</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f5f5f5;
+      position: relative;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    .course-list {
+      list-style: none;
+      padding: 0;
+    }
+    .course-list li {
+      background: #fff;
+      margin: 10px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    button, .course-link {
+      padding: 10px 15px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    button:hover, .course-link:hover {
+      background-color: #0056b3;
+    }
+    .enrolled {
+      background-color: #28a745;
+      cursor: not-allowed;
+    }
+    .enrolled:hover {
+      background-color: #218838;
+    }
+    .drop-button {
+      background-color: #dc3545;
+    }
+    .drop-button:hover {
+      background-color: #c82333;
+    }
+    .course-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .course-item span {
+      flex: 1;
+      margin-right: 10px; /* Space between credit and button */
+    }
+    .logout-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 10px 15px;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .logout-button:hover {
+      background-color: #c82333;
+    }
+  </style>
+</head>
+<body>
+  <a href="http://localhost/neptun/login.php" class="logout-button">Kijelentkezés</a>
+
+  <h1>Kurzusok</h1>
+  <h2>Bejelentkezett felhasználó: <span id="logged-in-user"></span></h2>
+
+  <p>Válaszd ki, hogy mely kurzusokra szeretnél feliratkozni vagy leadni!</p>
+
+  <ul id="course-list" class="course-list"></ul>
+
+  <script>
+    // Bejelentkezett felhasználó adatainak beállítása a session-ből
+    const user = JSON.parse(sessionStorage.getItem('loggedInUser')) || { username: 'Student1', enrolledCourses: [] };
+
+    // Megjelenítjük a felhasználó nevét az oldalon
+    document.getElementById('logged-in-user').textContent = user.username;
+
+    // Kurzusok betöltése az API-ról (szimulálás)
+    async function fetchCourses() {
+      try {
+        // Szimulált API válasz
+        const courses = [
+          { id: 1, name: 'Rendszerfejlesztés technológiája és módszertana', code: 'SE123', credit: 6 },
+          { id: 2, name: 'Digitális elektronika', code: 'DE456', credit: 5 }
+        ];
+
+        const courseList = document.getElementById('course-list');
+        courseList.innerHTML = '';
+
+        // Kurzusok megjelenítése
+        courses.forEach(course => {
+          const li = document.createElement('li');
+          const isEnrolled = user.enrolledCourses.includes(course.id);
+          
+          li.innerHTML = `
+            <div class="course-item">
+              <span>${course.name} (${course.code}) - ${course.credit} kredit</span>
+              <div>
+                ${isEnrolled ? 
+                  `<button class="drop-button" onclick="dropCourse(${course.id})">Leadás</button>` : 
+                  `<button onclick="enrollInCourse(${course.id})">Felvétel</button>`
+                }
+              </div>
+            </div>
+          `;
+
+          // Ha a felhasználó már fel van véve a kurzusra, akkor zöld gomb
+          if (isEnrolled) {
+            li.querySelector('button').classList.add('enrolled');
+          }
+
+          courseList.appendChild(li);
+        });
+      } catch (error) {
+        console.error('Hiba a kurzusok betöltésekor:', error);
+      }
+    }
+
+    // Kurzus felvétele
+    async function enrollInCourse(courseId) {
+      try {
+        // Szimulált API válasz
+        user.enrolledCourses.push(courseId);
+        sessionStorage.setItem('loggedInUser', JSON.stringify(user)); // Mentjük a módosított felhasználót
+        alert("Sikeresen felvetted a tárgyat!");
+        fetchCourses(); // Frissítjük a kurzuslistát
+      } catch (error) {
+        console.error('Hiba a tárgyfelvétel során:', error);
+      }
+    }
+
+    // Kurzus leadása
+    async function dropCourse(courseId) {
+      try {
+        // Szimulált API válasz
+        user.enrolledCourses = user.enrolledCourses.filter(id => id !== courseId); // Töröljük a kurzust a felvett tárgyak listájából
+        sessionStorage.setItem('loggedInUser', JSON.stringify(user)); // Mentjük a módosított felhasználót
+        alert("Sikeresen leadtad a tárgyat!");
+        fetchCourses(); // Frissítjük a kurzuslistát
+      } catch (error) {
+        console.error('Hiba a tárgyleadás során:', error);
+      }
+    }
+
+    // Az oldal betöltésekor automatikusan lekérjük a kurzusokat
+    fetchCourses();
+  </script>
+</body>
+</html>
